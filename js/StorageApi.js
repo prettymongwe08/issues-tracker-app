@@ -17,16 +17,7 @@ class StorageApi {
     }
 
     storeIssue = (issue) => {
-        const list = this.getIssuesList("issues");
-
-        if (list !== null) {
-            const newList = JSON.parse(list);
-
-            newList.push(issue);
-            localStorage.setItem("issues", JSON.stringify(newList))
-        } else {
-            localStorage.setItem("issues", JSON.stringify(issue));
-        }
+        localStorage.setItem("issues", JSON.stringify(issue))
     }
 
     getIssuesList = () => {

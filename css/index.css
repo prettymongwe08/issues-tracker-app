@@ -16,6 +16,7 @@ body {
 /* header  */
 header {
     background: #ffffff;
+    color: #01466b;
     box-shadow: 1px 1px 1px #cccccc;
 }
 
@@ -52,7 +53,7 @@ header .header-content .app-nav-menu a {
 }
 
 .main-content-container {
-    background-color: #333333;
+    background-color: #01466b;
     color: #ffffff;
 }
 
@@ -81,21 +82,33 @@ header .header-content .app-nav-menu a {
 /* app-btn */
 
 /* forms */
-.rsvp-form,
 .sign-in-form {
     width: 80%;
     margin: 0 auto;
     padding: 1% 0 2% 0;
 }
 
-.rsvp-form .form-container,
+.form-container,
 .sign-in-form .form-container {
     width: 30%;
 }
 
-.rsvp-form .status-report,
+.status-report,
 .sign-in-form .status-report {
     color: red;
+}
+
+.bi-trash-fill {
+    color: red;
+}
+
+tbody tr td:last-child div {
+    width: 40px;
+    cursor: pointer;
+}
+
+tbody tr td:last-child {
+    display: flex;
 }
 
 input[type='checkbox'] {
@@ -138,3 +151,48 @@ input[type='checkbox'] {
 }
 
 /* user details */
+
+@media screen and (max-width: 1024px) {
+
+    .main-content .registered-users,
+    .main-content .user-details h4,
+    .welcome-message {
+        width: 95%;
+    }
+
+    header .header-content {
+        width: 100%;
+    }
+
+    .main-content .controls {
+        display: grid;
+        justify-content: unset;
+    }
+
+    .form-container,
+    .sign-in-form .form-container {
+        width: 100%;
+    }
+
+    .welcome-message {
+        font-size: 12px;
+    }
+
+    .controls {
+        display: grid;
+    }
+
+    .controls .btn,
+    .controls fieldset {
+        margin: 10px 0 10px 0;
+    }
+
+    header .header-content {
+        display: grid;
+    }
+
+    .main-content .issues-form,
+    fieldset {
+        width: 100%;
+    }
+}

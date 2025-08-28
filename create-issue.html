@@ -39,27 +39,23 @@
                     </div>
                 </div>
                 <div class="user-details">
-                    <h4></h4>
+                    <h4>Create, Edit, Delete</h4>
                 </div>
                 <br />
                 <div class="general-contents">
                     <div class="registered-users">
+                        <p class="status-report"></p>
                         <div class="issues-form">
                             <fieldset class="form-group">
                                 <label>Issue Name</label>
-                                <input type="text" class="form-control" placeholder="Find issues . . . " name="Issue"
-                                    id="Issue" />
-                            </fieldset>
-                            <fieldset class="form-group">
-                                <label>Issue Description</label>
-                                <textarea class="form-control" name="Description" id="Description"
-                                    placeholder="Describe the issue here"></textarea>
+                                <input type="text" class="form-control" placeholder="Issues Name " name="Name"
+                                    id="Name" />
                             </fieldset>
                             <fieldset class="form-group">
                                 <label>Issue Priority</label>
                                 <select class="form-control" name="Priority" id="Priority">
                                     <optgroup>
-                                        <option value="">Select Issue Status</option>
+                                        <option value="">Select Issue Priority</option>
                                         <option value="High">High</option>
                                         <option value="Medium">Medium</option>
                                         <option value="Low">Low</option>
@@ -68,7 +64,7 @@
                             </fieldset>
                             <fieldset class="form-group">
                                 <label>Issue Status</label>
-                                <select class="form-control" name="Priority" id="Priority">
+                                <select class="form-control" name="Status" id="Status">
                                     <optgroup>
                                         <option value="">Select Issue Status</option>
                                         <option value="Active">Active</option>
@@ -80,20 +76,29 @@
                             <div onclick="createIssue()" class="btn btn-success">
                                 <span>Create Issue</span>
                             </div>
+                            <div onclick="updateIssue()" class="btn btn-info">
+                                <span>Update Issue</span>
+                            </div>
+                            <div onclick="cancelEditing()" class="btn btn-warning">
+                                <span>Cancel Editing</span>
+                            </div>
                         </div>
                         <br />
-                        <h4>Issues(4)</h4>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Priority</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                        <h4></h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,15 +106,88 @@
     </section>
 
     <script type="text/javascript">
-        const issuesList = [];
+        let IsEditing;
+        let issuesList = [];
+
         const Storage = new StorageApi();
 
         window.onload = async function () {
             await checkIfUserIsLoggedIn();
 
             const issues = Storage.getIssuesList();
+            const formInputFields = Array.from(document.querySelectorAll(".issues-form input, .issues-form select"));
 
-            issuesList = JSON.parse(issues);
+            document.querySelector(".btn-success").style.display = "inline-block";
+
+            document.querySelector(".btn-info").style.display = "none";
+            document.querySelector(".btn-warning").style.display = "none";
+
+            if (issues !== null) {
+                issuesList = JSON.parse(issues);
+                buildIssuesTable(issuesList);
+                updateDomHTMLList();
+            }
+
+            if (window.location.search.indexOf("?index=") > -1) {
+                const itemIndex = window.location.search.split("?index=")[1];
+
+                const item = issuesList[itemIndex];
+
+                document.querySelector(".btn-success").style.display = "none";
+
+                document.querySelector(".btn-info").style.display = "inline-block";
+                document.querySelector(".btn-warning").style.display = "inline-block";
+
+                formInputFields.forEach((input) => {
+                    switch (input.name) {
+                        case "Name":
+                            input.value = item?.Name;
+                            break;
+                        case "Status":
+                            input.value = item?.Status;
+                            break;
+                        default:
+                            input.value = item?.Priority;
+                            break;
+                    }
+                });
+            }
+        }
+
+        function cancelEditing() {
+            const formInputFields = Array.from(document.querySelectorAll(".issues-form input, .issues-form select"));
+
+            IsEditing = undefined;
+
+            document.querySelector(".btn-success").style.display = "inline-block";
+
+            document.querySelector(".btn-info").style.display = "none";
+            document.querySelector(".btn-warning").style.display = "none";
+
+            formInputFields.forEach((input) => {
+                input.value = "";
+            })
+        }
+
+        function updateIssue() {
+            const formInputFields = Array.from(document.querySelectorAll(".issues-form input, .issues-form select"));
+
+            formInputFields.forEach((input) => {
+                switch (input.name) {
+                    case "Name":
+                        issuesList[IsEditing].Name = input?.value;
+                        break;
+                    case "Status":
+                        issuesList[IsEditing].Status = input?.value;
+                        break;
+                    default:
+                        issuesList[IsEditing].Priority = input?.value;
+                        break;
+                }
+            });
+
+            buildIssuesTable(issuesList);
+            Storage.storeIssue(issuesList);
         }
 
         function signout(event) {
@@ -122,6 +200,20 @@
             const isDeleted = Storage.removeData("currentUser");
 
             window.location.assign("/auth/signin.html");
+        }
+
+        function responseHandle(message) {
+            document.querySelector(".status-report").textContent = message;
+        }
+
+        function getDate() {
+            return new Date().getFullYear() + "-" +
+                ((new Date().getMonth() + 1) < 9 ? "0" + (new Date().getMonth() + 1) : (new Date().getMonth() + 1))
+                + "-" + ((new Date().getDate()) < 9 ? "0" + (new Date().getDate()) : (new Date().getDate()))
+        }
+
+        function updateDomHTMLList() {
+            document.querySelector(".registered-users h4").textContent = issuesList?.length + " Issues";
         }
 
         async function checkIfUserIsLoggedIn() {
@@ -142,28 +234,104 @@
 
                 buildIssuesTable(issuesList);
 
-                document.querySelector(".user-details h4").textContent = "Create new Issue";
-
-
             } else {
                 window.location.assign("/auth/signin.html");
             }
         }
 
         function buildIssuesTable(list) {
-            list.forEach((row) => {
-                document.querySelector("tbody").innerHTML += `<tr>
-                        <td>${row.Username}</td>
-                        <td>${row.Email}</td>
-                        <td>${row.FirstName}</td>
-                        <td>${row.LastName}</td>
-                        <td><div class='app-btn'>Delete</div></td>
+            document.querySelector("tbody").innerHTML = "";
+
+            list.forEach((row, index) => {
+                document.querySelector("tbody").innerHTML += `<tr id=${index}>
+                        <td>${row.Name}</td>
+                        <td>${row.Date}</td>
+                        <td>${row.Status}</td>
+                        <td>${row.Priority}</td>
+                        <td><div><i class="bi bi-pencil-square"></i></div><div><i class="bi bi-trash-fill"></i></div></td>
                     </tr>`;
+            });
+
+            Array.from(document.querySelectorAll("tbody i")).forEach((item) => {
+                if (item?.classList?.contains("bi-pencil-square"))
+                    item?.addEventListener("click", (event) => {
+                        const formInputFields = Array.from(document.querySelectorAll(".issues-form input, .issues-form select"));
+                        const element = getElementParent(event.target);
+                        const elementIndex = element?.id;
+
+                        IsEditing = elementIndex;
+
+                        document.querySelector(".btn-success").style.display = "none";
+                        document.querySelector(".btn-info").style.display = "inline-block";
+                        document.querySelector(".btn-warning").style.display = "inline-block";
+
+                        const item = issuesList[elementIndex];
+
+                        formInputFields.forEach((input) => {
+                            switch (input.name) {
+                                case "Name":
+                                    input.value = item?.Name;
+                                    break;
+                                case "Status":
+                                    input.value = item?.Status;
+                                    break;
+                                default:
+                                    input.value = item?.Priority;
+                                    break;
+                            }
+                        });
+                    }), false;
+                else
+                    item?.addEventListener("click", (event) => {
+                        const element = getElementParent(event.target);
+                        const elementIndex = element?.id;
+
+                        const temp = issuesList.filter((item, index) => {
+                            return (index != elementIndex);
+                        });
+
+                        issuesList = temp
+                        buildIssuesTable(temp);
+                        Storage.storeIssue(temp);
+                        updateDomHTMLList(temp);
+                    }, false)
             });
         }
 
-        function createIssue() {
+        function getElementParent(element) {
+            while (element.localName !== "tr") {
+                element = element?.parentElement;
+            }
 
+            return element;
+        }
+
+        function createIssue() {
+            const formInputFields = Array.from(document.querySelectorAll(".issues-form input, .issues-form select"));
+            const isFormValid = formInputFields.find((item) => {
+                return item.value == "";
+            });
+
+            if (isFormValid) {
+                responseHandle("Please fill in all required fields.");
+            } else {
+                const params = {};
+
+                formInputFields.forEach((input) => {
+                    params[input.name] = input.value;
+                });
+
+                params.Date = getDate();
+
+                issuesList.push(params);
+                Storage.storeIssue(issuesList);
+                buildIssuesTable(issuesList);
+                updateDomHTMLList();
+
+                formInputFields.forEach((input) => {
+                    input.value = "";
+                });
+            }
         }
     </script>
 </body>

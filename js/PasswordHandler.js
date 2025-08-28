@@ -29,6 +29,8 @@ class PasswordHandler extends StorageApi {
                 return {};
 
             return storedUser;
+        } else {
+            return {}
         }
     }
 }

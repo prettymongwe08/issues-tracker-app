@@ -18,35 +18,12 @@ class FormBuilder {
         formContainer.setAttribute("class", "form-container")
 
         FormProps.forEach((prop) => {
-            let formInputField;
-
             const formLabel = document.createElement("label");
+            const formInputField = document.createElement("input");
             const formInputFieldset = document.createElement("fieldset");
 
-            if (prop.type == "select") {
-                let option = document.createElement("option");
-
-                const optGroup = document.createElement("optgroup");
-
-                formInputField = document.createElement("select");
-
-                option.setAttribute("value", "");
-                option.setAttribute("textcontent", "Select " + prop.SelectName);
-                formInputField.appendChild(optGroup);
-
-                optGroup.appendChild()
-
-                prop.options.forEach((item) => {
-                    option = document.createElement("option");
-                    option.setAttribute("value", item);
-                    optGroup.appendChild()
-                });
-            } else {
-                formInputField = document.createElement("input");
-                formInputField.setAttribute("type", prop.type);
-            }
-
             formInputField.setAttribute("id", prop.id);
+            formInputField.setAttribute("type", prop.type);
             formInputField.setAttribute("name", prop.name);
 
             if (prop.placeholder)

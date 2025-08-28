@@ -24,6 +24,7 @@
                 <div class="app-nav-menu">
                     <a href="./auth/signin.html">Sign In</a>
                     <a href="./auth/signup.html">Sign Up</a>
+                    <a hidden href="#" onclick="navigate()">Create Issue</a>
                     <a hidden href="#" onclick="deleteAcc(event)">Delete Account</a>
                     <a hidden href="#" onclick="signout(event)">Sign Out</a>
                 </div>
@@ -48,9 +49,8 @@
                     <div class="registered-users">
                         <div class="controls">
                             <fieldset class="form-group">
-                                <!-- <label>Find Issues</label> -->
-                                <input type="text" class="form-control" placeholder="Find issues . . . " name="Issue"
-                                    id="Issue" />
+                                <input onkeyup="filterIssues(event)" type="text" class="form-control"
+                                    placeholder="Find issues . . . " name="Issue" id="Issue" />
                             </fieldset>
                             <div onclick="createIssue()" class="btn btn-success">
                                 <span>Create Issue</span>
@@ -58,17 +58,20 @@
                         </div>
                         <br />
                         <h4>Issues(4)</h4>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Priority</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -76,7 +79,8 @@
     </section>
 
     <script type="text/javascript">
-        const issuesList = [];
+        let issuesList = [];
+
         const Storage = new StorageApi();
 
         window.onload = async function () {
@@ -84,7 +88,38 @@
 
             const issues = Storage.getIssuesList();
 
-            issuesList = JSON.parse(issues);
+            if (issues !== null) {
+                issuesList = JSON.parse(issues);
+                buildIssuesTable(issuesList);
+                updateDomHTMLList();
+            }
+        }
+
+        function updateDomHTMLList() {
+            document.querySelector(".registered-users h4").textContent = issuesList?.length + " Issues";
+        }
+
+        function navigate() {
+            window.location.assign("/create-issue.html")
+        }
+
+        function filterIssues(event) {
+            const value = event?.target.value;
+
+            if (value?.length >= 3) {
+                const temp = issuesList?.filter((item) => {
+                    return (item?.Name.toLowerCase().match(value.toLowerCase()) ||
+                        item?.Status.toLowerCase().match(value.toLowerCase()) ||
+                        item?.Priority.toLowerCase().match(value.toLowerCase()) ||
+                        item?.Date.match(value))
+                });
+
+                buildIssuesTable(temp);
+                updateDomHTMLList(temp);
+            } else {
+                buildIssuesTable(issuesList);
+                updateDomHTMLList(issuesList);
+            }
         }
 
         function signout(event) {
@@ -128,16 +163,52 @@
         function createIssue() {
             window.location.assign("create-issue.html");
         }
+
         function buildIssuesTable(list) {
-            list.forEach((row) => {
-                document.querySelector("tbody").innerHTML += `<tr>
-                        <td>${row.Username}</td>
-                        <td>${row.Email}</td>
-                        <td>${row.FirstName}</td>
-                        <td>${row.LastName}</td>
-                        <td><div class='app-btn'>Delete</div></td>
+            document.querySelector("tbody").innerHTML = "";
+
+            list.forEach((row, index) => {
+                document.querySelector("tbody").innerHTML += `<tr id=${index}>
+                        <td>${row.Name}</td>
+                        <td>${row.Date}</td>
+                        <td>${row.Status}</td>
+                        <td>${row.Priority}</td>
+                        <td><div><i class="bi bi-pencil-square"></i></div><div><i class="bi bi-trash-fill"></i></div></td>
                     </tr>`;
             });
+
+            Array.from(document.querySelectorAll("tbody i")).forEach((item) => {
+                if (item?.classList?.contains("bi-pencil-square"))
+                    item?.addEventListener("click", (event) => {
+                        const formInputFields = Array.from(document.querySelectorAll(".issues-form input, .issues-form select"));
+                        const element = getElementParent(event.target);
+                        const elementIndex = element?.id;
+
+                        window.location.assign(`/create-issue.html?index=${elementIndex}`)
+                    }), false;
+                else
+                    item?.addEventListener("click", (event) => {
+                        const element = getElementParent(event.target);
+                        const elementIndex = element?.id;
+
+                        const temp = issuesList.filter((item, index) => {
+                            return (index != elementIndex);
+                        });
+
+                        issuesList = temp
+                        buildIssuesTable(temp);
+                        Storage.storeIssue(temp);
+                        updateDomHTMLList(temp);
+                    }, false)
+            });
+        }
+
+        function getElementParent(element) {
+            while (element.localName !== "tr") {
+                element = element?.parentElement;
+            }
+
+            return element;
         }
     </script>
 </body>
